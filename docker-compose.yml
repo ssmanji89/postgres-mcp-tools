@@ -4,16 +4,16 @@ services:
     container_name: memory-postgres
     restart: always
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-memory_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-iO@V_Y$T(3YTN)%vGd#RE6piIb)9hHO*}
-      POSTGRES_DB: ${POSTGRES_DB:-memory_db}
+      POSTGRES_USER: memory_user
+      POSTGRES_PASSWORD: "#9H{+GOc$|J,tAJQt894e:vV=PZ-CI&>"
+      POSTGRES_DB: memory_db
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-memory_user} -d ${POSTGRES_DB:-memory_db}"]
+      test: ["CMD-SHELL", "pg_isready -U memory_user -d memory_db"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -36,19 +36,20 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      NODE_ENV: ${NODE_ENV:-production}
+      NODE_ENV: production
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
-      POSTGRES_DB: ${POSTGRES_DB:-memory_db}
-      POSTGRES_USER: ${POSTGRES_USER:-memory_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-iO@V_Y$T(3YTN)%vGd#RE6piIb)9hHO*}
-      MCP_SERVER_PORT: ${MCP_SERVER_PORT:-3000}
-      LOG_LEVEL: ${LOG_LEVEL:-info}
-      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-mock}
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      POSTGRES_DB: memory_db
+      POSTGRES_USER: memory_user
+      POSTGRES_PASSWORD: "#9H{+GOc$|J,tAJQt894e:vV=PZ-CI&>"
+      MCP_SERVER_HOST: 0.0.0.0
+      MCP_SERVER_PORT: 3000
+      HTTP_PORT: 8080
+      LOG_LEVEL: info
+      EMBEDDING_MODEL: mock
     ports:
-      - "127.0.0.1:${MCP_SERVER_PORT:-3000}:3000"
+      - "3000:3000"
+      - "8080:8080"
     networks:
       - postgres-memory-network
     security_opt:

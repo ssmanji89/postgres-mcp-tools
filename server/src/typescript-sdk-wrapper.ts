@@ -2,9 +2,20 @@
 // We can't directly import from '@modelcontextprotocol/typescript-sdk' due to package resolution issues
 
 import { Server as MCPServer } from '../typescript-sdk/dist/esm/server/index.js';
+import http from 'http';
+import { logger } from './utils/logger.js';
+
+// Enhanced response object to include Express-like methods
+interface EnhancedResponse extends http.ServerResponse {
+  status(code: number): EnhancedResponse;
+  json(data: any): void;
+}
 
 // Server class with the correct constructor parameters 
 export class Server extends MCPServer {
+  private httpServer: http.Server | null = null;
+  private endpoints: Map<string, (req: http.IncomingMessage, res: EnhancedResponse) => Promise<void>> = new Map();
+
   constructor(options = {}) {
     super({
       name: 'PostgresMCP',
@@ -20,14 +31,77 @@ export class Server extends MCPServer {
   }
 
   async listen(port: number, host: string) {
-    // Custom implementation of listen (since it doesn't exist in the base class)
-    // This would typically set up an HTTP server or WebSocket endpoint
-    console.log(`[Server] Started listening on ${host}:${port}`);
+    // Create an HTTP server
+    this.httpServer = http.createServer((req, res) => this.handleRequest(req, res as EnhancedResponse));
+    
+    return new Promise<void>((resolve, reject) => {
+      if (!this.httpServer) {
+        return reject(new Error('HTTP server not initialized'));
+      }
+      
+      this.httpServer.listen(port, host, () => {
+        console.log(`[Server] Started listening on ${host}:${port}`);
+        resolve();
+      }).on('error', (error) => {
+        reject(error);
+      });
+    });
   }
 
-  addEndpoint(path: string, handler: (req: any, res: any) => Promise<void>) {
-    // Custom implementation to add HTTP endpoints
+  addEndpoint(path: string, handler: (req: http.IncomingMessage, res: EnhancedResponse) => Promise<void>) {
+    // Store the handler for the endpoint
+    this.endpoints.set(path, handler);
     console.log(`[Server] Added endpoint: ${path}`);
+  }
+
+  async close() {
+    return new Promise<void>((resolve, reject) => {
+      if (!this.httpServer) {
+        return resolve();
+      }
+      
+      this.httpServer.close((error) => {
+        if (error) {
+          return reject(error);
+        }
+        resolve();
+      });
+    });
+  }
+
+  private async handleRequest(req: http.IncomingMessage, res: http.ServerResponse) {
+    try {
+      // Parse the URL to get the path
+      const path = req.url || '/';
+      
+      // Find the handler for the endpoint
+      const handler = this.endpoints.get(path);
+      
+      // Enhance the response object with Express-like methods
+      const enhancedRes = res as EnhancedResponse;
+      enhancedRes.status = function(code: number) {
+        this.statusCode = code;
+        return this;
+      };
+      enhancedRes.json = function(data: any) {
+        this.setHeader('Content-Type', 'application/json');
+        this.end(JSON.stringify(data));
+      };
+      
+      if (handler) {
+        await handler(req, enhancedRes);
+      } else {
+        // Return 404 if no handler found
+        enhancedRes.status(404).json({ error: 'Not Found' });
+      }
+    } catch (error) {
+      logger.error('Error handling request:', error);
+      
+      // Return 500 if there's an error
+      res.statusCode = 500;
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ error: 'Internal Server Error' }));
+    }
   }
 }
 
