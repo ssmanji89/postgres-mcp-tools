@@ -11,3 +11,8 @@ npm-debug.log
 .gitattributes
 .gitignore
 .env
+docker-compose.dev.yml
+logs/
+tests/
+sully/
+scripts/direct-init.js
