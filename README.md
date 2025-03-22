@@ -230,17 +230,45 @@ ALTER SYSTEM SET wal_buffers = '16MB';
    - Check your configuration for correct database credentials
    - Ensure the port isn't already in use: `netstat -an | grep 5432`
    - Try a different port if 5432 is occupied
+   - **Use the troubleshooting script**: `npm run troubleshoot`
 
 2. **MCP server not starting**
    - Check for Node.js version compatibility (v18+): `node --version`
    - Verify the package is installed globally: `npm list -g postgres-memory-mcp`
    - Try reinstalling the package: `npm uninstall -g postgres-memory-mcp && npm install -g postgres-memory-mcp`
+   - **Use the troubleshooting script**: `npm run troubleshoot`
 
 3. **Claude not connecting to the MCP server**
    - Ensure the configuration file is in the correct location
    - Check that the command path is correct
    - Restart Claude Desktop completely (quit from system tray/menu bar)
    - Look for error logs in the Claude Desktop application
+   - **Use the troubleshooting script with the `--claude-config` option**: `npm run troubleshoot`
+
+4. **Module format errors**
+   - For "Cannot use import statement outside a module" errors, see the [Troubleshooting Guide](docs/TROUBLESHOOTING.md#module-format-errors)
+   - Try using the `.mjs` extension for scripts with ES Module syntax
+   - Add `"type": "module"` to your package.json if you're using your own project
+
+### Interactive Troubleshooting
+
+This package includes an interactive troubleshooting script that can help diagnose and fix common issues:
+
+```bash
+# Run the interactive troubleshooter
+npm run troubleshoot
+
+# Or if installed globally
+postgres-mcp-troubleshoot
+```
+
+The troubleshooter will:
+- Check Docker container status
+- Test database connections
+- Initialize database schema if needed
+- Generate configuration files
+- Create startup scripts
+- Set up Claude Desktop configuration
 
 ### Advanced Troubleshooting
 
@@ -267,6 +295,18 @@ For more detailed troubleshooting:
    docker run -d --name postgres-memory -e POSTGRES_USER=memory_user -e POSTGRES_PASSWORD=memory_password -e POSTGRES_DB=memory_db -p 5432:5432 ankane/pgvector
    ```
 
+5. If you encounter module format errors like `SyntaxError: Cannot use import statement outside a module`, try one of these solutions:
+   - Run the script with the `.mjs` extension: `mv your-script.js your-script.mjs && node your-script.mjs`
+   - Add `"type": "module"` to your package.json if you're working in your own project
+   - Create a CommonJS version of the script by replacing ES Module syntax with CommonJS syntax:
+     ```javascript
+     // Change this:
+     import path from 'path';
+     
+     // To this:
+     const path = require('path');
+     ```
+
 For more detailed help, see the [MCP Integration Guide](docs/MCP.md).
 
 ## Documentation
@@ -277,6 +317,7 @@ For more detailed help, see the [MCP Integration Guide](docs/MCP.md).
 - [MCP Integration Guide](docs/MCP.md)
 - [Production Deployment](docs/PRODUCTION.md)
 - [Memory Concepts](docs/MEMORY_CONCEPTS.md)
+- [Troubleshooting Guide](docs/TROUBLESHOOTING.md)
 
 ## Upgrading
 

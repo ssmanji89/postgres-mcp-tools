@@ -22,7 +22,8 @@
     "init-database": "node scripts/init-database.js",
     "prepare": "npm run build-server",
     "postinstall": "node scripts/postinstall.js",
-    "generate-password": "node scripts/generate-password.js"
+    "generate-password": "node scripts/generate-password.js",
+    "troubleshoot": "node scripts/troubleshoot-database.js"
   },
   "keywords": [
     "postgresql",
