@@ -1,6 +1,6 @@
 {
   "name": "postgres-mcp-tools",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "PostgreSQL-based memory system with vector search capabilities for AI applications, including MCP integration for Claude",
   "main": "src/index.js",
   "type": "module",
