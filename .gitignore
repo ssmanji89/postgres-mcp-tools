@@ -50,3 +50,6 @@ postgres_data_dev/
 *.tmp
 *.temp
 server/typescript-sdk
+
+# Sully folder - customized prompts
+sully/

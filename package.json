@@ -5,7 +5,8 @@
   "main": "src/index.js",
   "type": "module",
   "bin": {
-    "postgres-mcp-server": "./bin/postgres-mcp-server.js"
+    "postgres-mcp-server": "./bin/postgres-mcp-server.js",
+    "postgres-memory-mcp": "./bin/postgres-memory-mcp.js"
   },
   "scripts": {
     "test": "jest",
