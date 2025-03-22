@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "postgres_memory": {
+      "command": "postgres-memory-mcp",
+      "args": [
+        "--config",
+        "{\"embeddingModel\":\"mock\",\"pgHost\":\"localhost\",\"pgPort\":5432,\"pgUser\":\"memory_user\",\"pgPassword\":\"memory_password\",\"pgDatabase\":\"memory_db\"}"
+      ]
+    }
+  }
+}

@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: memory-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-memory_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_in_production}
+      POSTGRES_DB: ${POSTGRES_DB:-memory_db}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-memory_user} -d ${POSTGRES_DB:-memory_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - postgres-memory-network
+
+  mcp-server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: mcp-server
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-memory_db}
+      POSTGRES_USER: ${POSTGRES_USER:-memory_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_in_production}
+      MCP_SERVER_PORT: ${MCP_SERVER_PORT:-3000}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-mock}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    ports:
+      - "${MCP_SERVER_PORT:-3000}:3000"
+    networks:
+      - postgres-memory-network
+
+networks:
+  postgres-memory-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local

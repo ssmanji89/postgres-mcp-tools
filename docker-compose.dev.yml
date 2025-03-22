@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: memory-postgres-dev
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-memory_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-memory_password}
+      POSTGRES_DB: ${POSTGRES_DB:-memory_db}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+      - ./init:/docker-entrypoint-initdb.d
+    networks:
+      - postgres-memory-network-dev
+
+  # Development mode doesn't include the mcp-server by default
+  # Instead, run it locally for easier debugging
+
+networks:
+  postgres-memory-network-dev:
+    driver: bridge
+
+volumes:
+  postgres_data_dev:
+    driver: local
