@@ -49,3 +49,4 @@ postgres_data_dev/
 # Temporary files
 *.tmp
 *.temp
+server/typescript-sdk
