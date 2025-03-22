@@ -13,6 +13,9 @@ COPY . .
 # Build TypeScript
 RUN npm run build
 
+# Fix pg module import issue
+RUN sed -i 's/import { Pool } from '"'"'pg'"'"';/import pkg from '"'"'pg'"'"';\nconst { Pool } = pkg;/' dist/db/client.js
+
 # Set environment variables
 ENV NODE_ENV production
 ENV PORT 3000

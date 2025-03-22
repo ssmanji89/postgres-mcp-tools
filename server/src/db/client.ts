@@ -1,4 +1,6 @@
-import { Pool, PoolClient } from 'pg';
+import pkg from 'pg';
+const { Pool } = pkg;
+type PoolClient = any; // Using any as a temporary fix for TypeScript issues
 import dotenv from 'dotenv';
 import { logger } from '../utils/logger.js';
 

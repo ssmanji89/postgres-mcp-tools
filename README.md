@@ -28,29 +28,37 @@ A production-ready PostgreSQL-based memory system with vector embeddings for AI 
 #### 1. Install the package globally
 
 ```bash
-npm install -g postgres-memory-mcp
+npm install -g postgres-mcp-tools
 ```
+
+This will automatically:
+- Generate a secure random password for PostgreSQL
+- Create a `.env` file with the generated credentials
+- Set up the necessary configuration
 
 #### 2. Start PostgreSQL with Docker (recommended)
 
+The easiest way to start is using the included Docker Compose file:
+
 ```bash
+# Start with Docker Compose
+cd node_modules/postgres-mcp-tools
+docker-compose up -d
+```
+
+You can also run PostgreSQL manually if you prefer:
+
+```bash
+# Get the generated password from your .env file
+PASSWORD=$(grep POSTGRES_PASSWORD .env | cut -d '=' -f2)
+
 docker run -d \
   --name postgres-memory \
   -e POSTGRES_USER=memory_user \
-  -e POSTGRES_PASSWORD=memory_password \
+  -e POSTGRES_PASSWORD=$PASSWORD \
   -e POSTGRES_DB=memory_db \
   -p 5432:5432 \
   ankane/pgvector
-```
-
-Alternatively, you can use our Docker Compose file:
-
-```bash
-# Download the docker-compose file
-curl -O https://raw.githubusercontent.com/ssmanji89/postgres-mcp-tools/main/docker-compose.dev.yml
-
-# Start with Docker Compose
-docker-compose -f docker-compose.dev.yml up -d
 ```
 
 #### 3. Configure Claude Desktop
@@ -84,15 +92,17 @@ Add the following content:
 {
   "mcpServers": {
     "postgres_memory": {
-      "command": "postgres-memory-mcp",
+      "command": "postgres-mcp-server",
       "args": [
         "--config",
-        "{\"embeddingModel\":\"mock\",\"pgHost\":\"localhost\",\"pgPort\":5432,\"pgUser\":\"memory_user\",\"pgPassword\":\"memory_password\",\"pgDatabase\":\"memory_db\"}"
+        "{\"embeddingModel\":\"mock\",\"pgHost\":\"localhost\",\"pgPort\":5432,\"pgUser\":\"memory_user\",\"pgPassword\":\"YOUR_GENERATED_PASSWORD\",\"pgDatabase\":\"memory_db\"}"
       ]
     }
   }
 }
 ```
+
+Replace `YOUR_GENERATED_PASSWORD` with the password generated during installation (found in your `.env` file).
 
 #### 4. Restart Claude Desktop
 

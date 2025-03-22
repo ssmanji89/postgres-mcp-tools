@@ -1,6 +1,6 @@
 {
   "name": "postgres-memory-mcp",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "PostgreSQL-based memory system with vector search capabilities for MCP",
   "main": "dist/index.js",
   "type": "module",

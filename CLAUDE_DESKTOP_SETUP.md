@@ -1,379 +1,222 @@
-# Setting Up PostgreSQL MCP Tools for Claude Desktop
+# Claude Desktop Setup Guide for PostgreSQL MCP Tools
 
-This guide will help you set up PostgreSQL MCP Tools to enhance Claude Desktop with long-term memory capabilities.
-
-## What is PostgreSQL MCP Tools?
-
-PostgreSQL MCP Tools provides Claude with a memory system that allows it to:
-
-- Remember information from past conversations
-- Retrieve relevant context based on your current discussion
-- Maintain consistency across multiple conversations
-- Store and retrieve rich contextual information with vector-based semantic search
+This guide provides detailed instructions for setting up Claude Desktop to work with the PostgreSQL MCP Tools memory system.
 
 ## Prerequisites
 
-Before you begin, make sure you have:
+Before starting, ensure you have:
 
-- [Claude Desktop](https://claude.ai/downloads) installed on your computer
-- [Node.js](https://nodejs.org/) 18.0.0 or higher
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (recommended for PostgreSQL)
+1. [Claude Desktop](https://claude.ai/downloads) installed on your computer
+2. [Node.js](https://nodejs.org/) 18.0.0 or higher
+3. [Docker Desktop](https://www.docker.com/products/docker-desktop/) for running PostgreSQL
 
-## Installation Options
+## Installation Steps
 
-You have two main options for installation:
+### 1. Install PostgreSQL MCP Tools
 
-### Option 1: Quick Setup (Recommended)
-
-1. **Install the NPM package globally**
+Install the package globally using npm:
 
 ```bash
-npm install -g postgres-memory-mcp
+npm install -g postgres-mcp-tools
 ```
 
-2. **Start PostgreSQL with Docker**
+This will:
+- Install the required dependencies
+- Generate a secure random password for PostgreSQL
+- Create a `.env` file with configuration settings
+
+### 2. Start PostgreSQL Database
+
+The easiest way to run PostgreSQL is using Docker:
 
 ```bash
-docker run -d \
-  --name postgres-memory \
-  -e POSTGRES_USER=memory_user \
-  -e POSTGRES_PASSWORD=memory_password \
-  -e POSTGRES_DB=memory_db \
-  -p 5432:5432 \
-  ankane/pgvector
-```
-
-Alternatively, you can use our Docker Compose file:
-
-```bash
-# Download the docker-compose file
-curl -O https://raw.githubusercontent.com/ssmanji89/postgres-mcp-tools/main/docker-compose.dev.yml
-
-# Start with Docker Compose
-docker-compose -f docker-compose.dev.yml up -d
-```
-
-3. **Configure Claude Desktop**
-
-First, locate the configuration directory for your operating system:
-
-**For macOS**:
-```bash
-mkdir -p ~/Library/Application\ Support/Claude/
-```
-
-**For Windows**:
-```bash
-mkdir -p %APPDATA%\Claude\
-```
-
-**For Linux**:
-```bash
-mkdir -p ~/.config/Claude/
-```
-
-Next, create or edit the configuration file:
-
-**For macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-**For Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
-**For Linux**: `~/.config/Claude/claude_desktop_config.json`
-
-Add the following content to the configuration file:
-
-```json
-{
-  "mcpServers": {
-    "postgres_memory": {
-      "command": "postgres-memory-mcp",
-      "args": [
-        "--config",
-        "{\"embeddingModel\":\"mock\",\"pgHost\":\"localhost\",\"pgPort\":5432,\"pgUser\":\"memory_user\",\"pgPassword\":\"memory_password\",\"pgDatabase\":\"memory_db\"}"
-      ]
-    }
-  }
-}
-```
-
-4. **Restart Claude Desktop**
-
-Fully exit Claude Desktop (quit from the system tray/menu bar) and restart it for the changes to take effect.
-
-5. **Verify the Installation**
-
-Open Claude Desktop and type:
-```
-Can you check if the memory system is working properly?
-```
-
-Claude should respond indicating it can access the memory system.
-
-### Option 2: Manual Setup (Advanced)
-
-If you prefer to clone the repository and run from source:
-
-```bash
-# Clone the repository
-git clone https://github.com/ssmanji89/postgres-mcp-tools.git
-cd postgres-mcp-tools
-
-# Install dependencies
-npm install
+# Navigate to where postgres-mcp-tools is installed
+cd $(npm root -g)/postgres-mcp-tools
 
 # Start PostgreSQL with Docker Compose
-docker-compose -f docker-compose.dev.yml up -d
-
-# Build the server
-npm run build-server
-
-# Create the configuration directory
-mkdir -p ~/Library/Application\ Support/Claude/  # for macOS
-# OR
-mkdir -p %APPDATA%\Claude\  # for Windows
-# OR
-mkdir -p ~/.config/Claude/  # for Linux
-
-# Copy the example configuration
-cp config/claude_desktop_config.json.example ~/Library/Application\ Support/Claude/claude_desktop_config.json  # for macOS
-# OR
-cp config/claude_desktop_config.json.example %APPDATA%\Claude\claude_desktop_config.json  # for Windows
-# OR
-cp config/claude_desktop_config.json.example ~/.config/Claude/claude_desktop_config.json  # for Linux
+docker-compose up -d postgres
 ```
 
-Then edit the configuration file to match your setup and restart Claude Desktop.
-
-## Configuration Options
-
-You can customize the following settings in the `--config` parameter:
-
-### Basic Configuration Options
-
-- `embeddingModel`: Choose the embedding model to use:
-  - `"mock"`: For testing (no API key needed)
-  - `"openai"`: Higher quality (requires OpenAI API key)
-  - `"anthropic"`: Optimized for Claude (requires Anthropic API key)
-- `pgHost`: PostgreSQL host (default: "localhost")
-- `pgPort`: PostgreSQL port (default: 5432)
-- `pgUser`: PostgreSQL username (default: "memory_user")
-- `pgPassword`: PostgreSQL password
-- `pgDatabase`: PostgreSQL database name (default: "memory_db")
-
-### Advanced Configuration Options
-
-- `openaiApiKey`: OpenAI API key (required if using OpenAI embeddings)
-- `anthropicApiKey`: Anthropic API key (required if using Anthropic embeddings)
-- `port`: MCP server port (default: 3000)
-- `logLevel`: Logging level (default: "info")
-- `pgPoolMin`: Minimum database connections (default: 2)
-- `pgPoolMax`: Maximum database connections (default: 10)
-- `metadata`: Additional metadata to store with memories (optional)
-
-### Example Configurations
-
-#### Basic configuration with mock embeddings (no API key needed):
-
-```json
-{
-  "mcpServers": {
-    "postgres_memory": {
-      "command": "postgres-memory-mcp",
-      "args": [
-        "--config",
-        "{\"embeddingModel\":\"mock\",\"pgHost\":\"localhost\",\"pgPort\":5432,\"pgUser\":\"memory_user\",\"pgPassword\":\"memory_password\",\"pgDatabase\":\"memory_db\"}"
-      ]
-    }
-  }
-}
-```
-
-#### Configuration with OpenAI embeddings:
-
-```json
-{
-  "mcpServers": {
-    "postgres_memory": {
-      "command": "postgres-memory-mcp",
-      "args": [
-        "--config",
-        "{\"embeddingModel\":\"openai\",\"openaiApiKey\":\"sk-your-api-key\",\"pgHost\":\"localhost\",\"pgPort\":5432,\"pgUser\":\"memory_user\",\"pgPassword\":\"memory_password\",\"pgDatabase\":\"memory_db\"}"
-      ]
-    }
-  }
-}
-```
-
-#### Configuration with Anthropic embeddings and additional metadata:
-
-```json
-{
-  "mcpServers": {
-    "postgres_memory": {
-      "command": "postgres-memory-mcp",
-      "args": [
-        "--config",
-        "{\"embeddingModel\":\"anthropic\",\"anthropicApiKey\":\"sk-ant-your-api-key\",\"pgHost\":\"localhost\",\"pgPort\":5432,\"pgUser\":\"memory_user\",\"pgPassword\":\"memory_password\",\"pgDatabase\":\"memory_db\",\"metadata\":{\"userId\":\"user-123\",\"projectName\":\"research\"}}"
-      ]
-    }
-  }
-}
-```
-
-## Using Memory with Claude
-
-Once configured, Claude Desktop will automatically use the memory system in the background. Here's how to make the most of it:
-
-### Testing Memory
-
-Try these prompts to test if memory is working:
-
-1. Tell Claude something to remember:
-   ```
-   Please remember that my favorite color is purple and I have a dog named Max.
-   ```
-
-2. Later in the conversation (or in a new one), ask:
-   ```
-   What's my favorite color? Do I have any pets?
-   ```
-
-Claude should recall this information from memory.
-
-3. Test semantic search by asking about related topics:
-   ```
-   What do you know about my pet?
-   ```
-
-Claude should retrieve the relevant memory about Max.
-
-### Memory Management
-
-You can ask Claude to manage memories directly:
-
-- List memories:
-  ```
-  Use the memory_management tool to list the memories in our current conversation.
-  ```
-
-- Archive old memories:
-  ```
-  Use the memory_management tool to archive memories older than 30 days.
-  ```
-
-- Optimize for performance:
-  ```
-  Use the memory_management tool to optimize the vector index.
-  ```
-
-- Delete a specific memory (use the ID from the list command):
-  ```
-  Use the memory_management tool to delete memory 123.
-  ```
-
-## Troubleshooting
-
-### Common Issues
-
-**Claude doesn't seem to remember things:**
-- Verify PostgreSQL is running:
-  ```bash
-  docker ps | grep postgres
-  ```
-- Check that you restarted Claude Desktop after configuration
-- Try restarting both the Docker container and Claude Desktop:
-  ```bash
-  docker restart postgres-memory
-  ```
-- Check for errors in the Claude Desktop logs
-
-**Error when starting Claude Desktop:**
-- Check your Node.js version: `node --version` (should be 18+)
-- Verify the package is installed globally:
-  ```bash
-  npm list -g postgres-memory-mcp
-  ```
-- Verify PostgreSQL credentials in configuration match your setup
-- Look for error logs in the Claude Desktop application
-
-**Database connection errors:**
-- Make sure Docker is running
-- Check if PostgreSQL port 5432 is already in use:
-  ```bash
-  netstat -an | grep 5432  # macOS/Linux
-  netstat -an | findstr 5432  # Windows
-  ```
-- Try a different port in both Docker and configuration if 5432 is in use
-- Verify network settings if using a remote database
-
-### Advanced Troubleshooting
-
-For more detailed troubleshooting:
-
-1. Check PostgreSQL container logs:
-   ```bash
-   docker logs postgres-memory
-   ```
-
-2. Run the MCP server manually with debug logging:
-   ```bash
-   DEBUG=mcp:* postgres-memory-mcp
-   ```
-
-3. Test database connectivity directly:
-   ```bash
-   docker exec -it postgres-memory psql -U memory_user -d memory_db
-   ```
-
-4. Verify the pgvector extension:
-   ```sql
-   SELECT * FROM pg_extension WHERE extname = 'vector';
-   ```
-
-5. Reset and reinitialize the database:
-   ```bash
-   docker rm -f postgres-memory
-   docker run -d --name postgres-memory -e POSTGRES_USER=memory_user -e POSTGRES_PASSWORD=memory_password -e POSTGRES_DB=memory_db -p 5432:5432 ankane/pgvector
-   ```
-
-## Upgrading
-
-To upgrade PostgreSQL MCP Tools to the latest version:
+Verify that PostgreSQL is running:
 
 ```bash
-npm update -g postgres-memory-mcp
+docker ps
 ```
 
-Then restart Claude Desktop to use the updated version.
+You should see a container named `memory-postgres` in the list.
+
+### 3. Configure Claude Desktop
+
+First, locate your Claude Desktop configuration directory:
+
+**macOS**:
+```bash
+mkdir -p ~/Library/Application\ Support/Claude/
+cd ~/Library/Application\ Support/Claude/
+```
+
+**Windows**:
+```bash
+mkdir -p %APPDATA%\Claude\
+cd %APPDATA%\Claude\
+```
+
+**Linux**:
+```bash
+mkdir -p ~/.config/Claude/
+cd ~/.config/Claude/
+```
+
+Create or edit the configuration file:
+
+**macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`  
+**Windows**: `%APPDATA%\Claude\claude_desktop_config.json`  
+**Linux**: `~/.config/Claude/claude_desktop_config.json`  
+
+Add the following content to the file:
+
+```json
+{
+  "mcpServers": {
+    "postgres_memory": {
+      "command": "postgres-mcp-server",
+      "args": [
+        "--config",
+        "{\"embeddingModel\":\"mock\",\"pgHost\":\"localhost\",\"pgPort\":5432,\"pgUser\":\"memory_user\",\"pgPassword\":\"YOUR_GENERATED_PASSWORD\",\"pgDatabase\":\"memory_db\"}"
+      ]
+    }
+  }
+}
+```
+
+Replace `YOUR_GENERATED_PASSWORD` with the password from your `.env` file:
+
+```bash
+# Get password from .env file
+cd $(npm root -g)/postgres-mcp-tools
+cat .env | grep POSTGRES_PASSWORD
+```
+
+### 4. Start the MCP Server
+
+You can run the MCP server either through Docker or directly:
+
+**Option 1: Run with Docker (recommended for production)**:
+```bash
+cd $(npm root -g)/postgres-mcp-tools
+docker-compose up -d
+```
+
+**Option 2: Run directly (better for development)**:
+```bash
+cd $(npm root -g)/postgres-mcp-tools
+npm run start-server
+```
+
+### 5. Restart Claude Desktop
+
+1. Completely quit Claude Desktop (from system tray/menu bar)
+2. Restart Claude Desktop
+3. The MCP server should connect automatically
+
+## Verification
+
+To verify that Claude is connected to the memory system, ask:
+
+```
+Can you check if the PostgreSQL memory system is connected and working properly?
+```
+
+Claude should respond with a confirmation that the memory system is active.
+
+## Common Issues and Solutions
+
+### Connection Issues
+
+If Claude reports that it cannot connect to the memory system:
+
+1. **Verify PostgreSQL is running**:
+   ```bash
+   docker ps | grep memory-postgres
+   ```
+
+2. **Check MCP server logs**:
+   ```bash
+   docker logs mcp-server
+   # Or if running directly:
+   cd $(npm root -g)/postgres-mcp-tools
+   npm run start-server
+   ```
+
+3. **Ensure password matches**:
+   - The password in the Claude configuration must match what's in your `.env` file
+   - Check for special characters that might need escaping in the JSON
+
+### Database Errors
+
+If there are database connection errors:
+
+1. **Verify database initialization**:
+   ```bash
+   cd $(npm root -g)/postgres-mcp-tools
+   npm run init-database
+   ```
+
+2. **Check PostgreSQL logs**:
+   ```bash
+   docker logs memory-postgres
+   ```
+
+3. **Try accessing PostgreSQL directly**:
+   ```bash
+   # Get password from .env
+   PASSWORD=$(grep POSTGRES_PASSWORD .env | cut -d '=' -f2)
+   
+   # Connect to PostgreSQL
+   docker exec -it memory-postgres psql -U memory_user -d memory_db -W
+   # Enter password when prompted
+   ```
+
+### Embedding Model Issues
+
+If you encounter issues with the embedding model:
+
+1. **Use mock model for testing**:
+   - Set `"embeddingModel":"mock"` in your Claude configuration
+
+2. **For OpenAI embeddings**:
+   - Ensure you have an OpenAI API key
+   - Update your Claude configuration with:
+     ```
+     "embeddingModel":"openai","openaiApiKey":"your-openai-api-key"
+     ```
+
+3. **For Anthropic embeddings**:
+   - Ensure you have an Anthropic API key
+   - Update your Claude configuration with:
+     ```
+     "embeddingModel":"anthropic","anthropicApiKey":"your-anthropic-api-key"
+     ```
+
+## Advanced Configuration
+
+For advanced configuration options, see the full [README.md](README.md).
 
 ## Uninstalling
 
-To remove PostgreSQL MCP Tools:
+To completely remove PostgreSQL MCP Tools:
 
-1. Delete the MCP server configuration from Claude Desktop:
-   - Edit the `claude_desktop_config.json` file and remove the `postgres_memory` entry from `mcpServers`
-
-2. Stop and remove the Docker container:
+1. Remove configuration from Claude Desktop
+2. Stop and remove Docker containers:
    ```bash
-   docker stop postgres-memory
-   docker rm postgres-memory
+   cd $(npm root -g)/postgres-mcp-tools
+   docker-compose down -v
+   ```
+3. Uninstall the package:
+   ```bash
+   npm uninstall -g postgres-mcp-tools
    ```
 
-3. Uninstall the NPM package:
-   ```bash
-   npm uninstall -g postgres-memory-mcp
-   ```
+## Troubleshooting
 
-## Additional Resources
-
-- [Architecture Overview](docs/ARCHITECTURE.md)
-- [API Reference](docs/API.md)
-- [MCP Integration Guide](docs/MCP.md)
-- [Production Deployment](docs/PRODUCTION.md)
-- [Memory Concepts](docs/MEMORY_CONCEPTS.md)
-
-## Getting Help
-
-If you encounter issues not covered in this guide:
-
-1. Check the [GitHub repository](https://github.com/ssmanji89/postgres-mcp-tools) for updates and issues
-2. Submit a detailed bug report with your configuration and error logs
-3. Join the community discussions in the repository Issues section
+If you continue to experience issues, please check the [troubleshooting section](README.md#troubleshooting) in the main README or submit an issue on our GitHub repository.
