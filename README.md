@@ -225,27 +225,35 @@ ALTER SYSTEM SET wal_buffers = '16MB';
 
 ### Common Issues
 
-1. **Database connection errors**
+1. **Authentication failed errors**
+   - If you see "password authentication failed for user 'memory_user'" errors, run:
+     ```bash
+     npm run fix-postgres-auth
+     npm run run-with-config
+     ```
+   - This fixes authentication method mismatches between PostgreSQL and the client
+
+2. **Database connection errors**
    - Verify PostgreSQL is running: `docker ps`
    - Check your configuration for correct database credentials
    - Ensure the port isn't already in use: `netstat -an | grep 5432`
    - Try a different port if 5432 is occupied
    - **Use the troubleshooting script**: `npm run troubleshoot`
 
-2. **MCP server not starting**
+3. **MCP server not starting**
    - Check for Node.js version compatibility (v18+): `node --version`
    - Verify the package is installed globally: `npm list -g postgres-memory-mcp`
    - Try reinstalling the package: `npm uninstall -g postgres-memory-mcp && npm install -g postgres-memory-mcp`
-   - **Use the troubleshooting script**: `npm run troubleshoot`
+   - Run with explicit configuration: `npm run run-with-config`
 
-3. **Claude not connecting to the MCP server**
+4. **Claude not connecting to the MCP server**
    - Ensure the configuration file is in the correct location
    - Check that the command path is correct
    - Restart Claude Desktop completely (quit from system tray/menu bar)
    - Look for error logs in the Claude Desktop application
    - **Use the troubleshooting script with the `--claude-config` option**: `npm run troubleshoot`
 
-4. **Module format errors**
+5. **Module format errors**
    - For "Cannot use import statement outside a module" errors, see the [Troubleshooting Guide](docs/TROUBLESHOOTING.md#module-format-errors)
    - Try using the `.mjs` extension for scripts with ES Module syntax
    - Add `"type": "module"` to your package.json if you're using your own project

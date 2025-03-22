@@ -23,7 +23,9 @@
     "prepare": "npm run build-server",
     "postinstall": "node scripts/postinstall.js",
     "generate-password": "node scripts/generate-password.js",
-    "troubleshoot": "node scripts/troubleshoot-database.js"
+    "troubleshoot": "node scripts/troubleshoot-database.js",
+    "fix-postgres-auth": "bash scripts/fix-postgres-auth.sh",
+    "run-with-config": "bash scripts/run-with-config.sh"
   },
   "keywords": [
     "postgresql",

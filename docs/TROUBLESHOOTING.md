@@ -2,6 +2,57 @@
 
 This document provides solutions for common issues you might encounter when using postgres-mcp-tools.
 
+## Authentication Issues
+
+### Problem: Password Authentication Failed Error
+
+**Error Message**:
+```
+Query error: password authentication failed for user "memory_user"
+Database health check failed password authentication failed for user "memory_user"
+Database health check failed. Exiting.
+```
+
+**Root Cause**:
+The PostgreSQL container is configured to use SCRAM-SHA-256 authentication method for all external connections, but the MCP server is attempting to use MD5 or password authentication. This authentication method mismatch causes the connection to fail even with correct credentials.
+
+**Solution**:
+
+1. **Fix PostgreSQL Authentication Configuration**:
+   Run the provided script to update the PostgreSQL authentication configuration:
+
+   ```bash
+   ./scripts/fix-postgres-auth.sh
+   ```
+
+   This script:
+   - Updates the pg_hba.conf file in the PostgreSQL container to use MD5 authentication
+   - Reloads the PostgreSQL configuration
+   - Tests the connection to verify it's working
+
+2. **Run the MCP Server**:
+   After fixing the authentication configuration, run the MCP server with the correct environment variables:
+
+   ```bash
+   ./scripts/run-with-config.sh
+   ```
+
+### Understanding PostgreSQL Authentication
+
+PostgreSQL uses a configuration file called `pg_hba.conf` to control client authentication. The format is:
+
+```
+TYPE  DATABASE  USER  ADDRESS  METHOD
+```
+
+Common authentication methods include:
+- `trust`: Allow connection unconditionally
+- `md5`: Require MD5-encrypted password authentication
+- `scram-sha-256`: Require SCRAM-SHA-256 encrypted password authentication
+- `password`: Require unencrypted password authentication (insecure)
+
+Our fix changes the authentication method from `scram-sha-256` to `md5` which is more widely supported by client libraries.
+
 ## Module Format Errors
 
 ### Problem: Cannot use import statement outside a module
@@ -64,124 +115,43 @@ node --experimental-modules your-script.js
 
 ## Database Connection Issues
 
-### Problem: Authentication failed for user
+### Problem: Connection Timeout Issues
 
-If you see errors like:
+If you're experiencing connection timeout issues rather than authentication failures:
 
-```
-error: Query error: password authentication failed for user "memory_user"
-error: Database health check failed password authentication failed for user "memory_user"
-error: Database health check failed. Exiting.
-PostgreSQL MCP Server exited with code 1
-```
+1. **Verify Docker Container Status**:
+   ```bash
+   docker ps
+   ```
+   Ensure the memory-postgres container is running and healthy.
 
-### Solutions:
+2. **Check PostgreSQL Logs**:
+   ```bash
+   docker logs memory-postgres
+   ```
+   Look for any error messages or configuration issues.
 
-#### 1. Create a proper configuration file with credentials
+3. **Restart PostgreSQL Container**:
+   ```bash
+   docker restart memory-postgres
+   ```
+   Wait for the container to become healthy before starting the MCP server.
 
-One of the most reliable solutions is to explicitly pass your database credentials through a configuration file:
+### Verifying Correct Setup
 
-```bash
-# 1. Create a configuration file
-cat > /tmp/postgres-mcp-config.json << 'EOF'
-{
-  "pgHost": "localhost",
-  "pgPort": 5432,
-  "pgUser": "memory_user",
-  "pgPassword": "your_actual_password_here",
-  "pgDatabase": "memory_db",
-  "embeddingModel": "mock"
-}
-EOF
+To verify everything is set up correctly:
 
-# 2. Run the server with this configuration
-postgres-memory-mcp --config="$(cat /tmp/postgres-mcp-config.json)"
-```
+1. **Test PostgreSQL Connection**:
+   ```bash
+   docker exec memory-postgres psql -U memory_user -d memory_db -c "SELECT version();"
+   ```
+   This should display the PostgreSQL version without any password prompt.
 
-Replace `"your_actual_password_here"` with your actual database password from your `.env` file.
-
-#### 2. Check your environment variables
-
-Make sure your environment variables match your PostgreSQL configuration:
-
-```bash
-# Check .env file for credentials
-grep POSTGRES_PASSWORD .env
-
-# Export them as environment variables (consider adding to your .bashrc or .zshrc)
-export POSTGRES_USER="memory_user"
-export POSTGRES_PASSWORD="your_actual_password"
-export POSTGRES_DB="memory_db"
-export POSTGRES_HOST="localhost"
-export POSTGRES_PORT="5432"
-```
-
-#### 3. Verify Docker container credentials
-
-Ensure the Docker container is running with the expected credentials:
-
-```bash
-# Check if container is running
-docker ps | grep postgres
-
-# Check logs for any password or authentication issues
-docker logs memory-postgres
-
-# Verify you can connect to the database
-docker exec -it memory-postgres psql -U memory_user -d memory_db
-```
-
-#### 4. Recreate the database container with explicit credentials
-
-If you're still having issues, recreate the container with explicit credentials:
-
-```bash
-# Stop and remove the existing container
-docker rm -f memory-postgres
-
-# Create a new container with the same credentials as in your .env file
-docker run -d --name memory-postgres \
-  -e POSTGRES_USER=memory_user \
-  -e POSTGRES_PASSWORD="your_password_from_env_file" \
-  -e POSTGRES_DB=memory_db \
-  -p 5432:5432 \
-  postgres:16
-  
-# Initialize the database (if needed)
-docker exec -it memory-postgres bash -c 'psql -U memory_user -d memory_db -c "CREATE EXTENSION IF NOT EXISTS vector;"'
-```
-
-#### 5. Special characters in passwords
-
-If your password contains special characters (like `#`, `$`, `&`, etc.), make sure they're properly escaped in your configuration:
-
-```bash
-# For command line use, escape special characters
-export POSTGRES_PASSWORD='your\#complex\$password'
-
-# For JSON config files, no need to escape but use proper JSON formatting
-# {
-#   "pgPassword": "your#complex$password"
-# }
-```
-
-#### 6. Check Claude Desktop configuration
-
-If using with Claude Desktop, update the configuration file:
-
-```json
-{
-  "mcpServers": {
-    "postgres_memory": {
-      "command": "postgres-memory-mcp",
-      "args": [
-        "--config",
-        "{\"pgHost\":\"localhost\",\"pgPort\":5432,\"pgUser\":\"memory_user\",\"pgPassword\":\"your_actual_password\",\"pgDatabase\":\"memory_db\",\"embeddingModel\":\"mock\"}"
-      ]
-    }
-  }
-}
-```
+2. **Check Host Connection**:
+   ```bash
+   psql -h localhost -p 5432 -U memory_user -d memory_db -W
+   ```
+   Enter the password `Memory123!` when prompted.
 
 ### Problem: Network-related database connection issues
 
@@ -234,28 +204,6 @@ export POSTGRES_HOST=localhost
 export POSTGRES_HOST=postgres  # Use the service name defined in docker-compose.yml
 ```
 
-#### 4. Set explicit host binding
-
-```bash
-# Recreate container with explicit host binding if needed
-docker run -d --name memory-postgres \
-  -e POSTGRES_USER=memory_user \
-  -e POSTGRES_PASSWORD="your_password" \
-  -e POSTGRES_DB=memory_db \
-  -p 0.0.0.0:5432:5432 \  # Explicitly bind to all interfaces
-  postgres:16
-```
-
-#### 5. Check PostgreSQL configuration
-
-```bash
-# Verify PostgreSQL is listening on the expected addresses
-docker exec -it memory-postgres bash -c "cat /var/lib/postgresql/data/postgresql.conf | grep listen_addresses"
-
-# Should show: listen_addresses = '*'
-# If not, you may need to update the configuration
-```
-
 ### Problem: SSL-related connection issues
 
 If you see errors related to SSL:
@@ -282,30 +230,6 @@ cat > /tmp/postgres-mcp-config.json << 'EOF'
   "embeddingModel": "mock"
 }
 EOF
-```
-
-#### 2. For SSL-required connections
-
-If your PostgreSQL server requires SSL:
-
-```bash
-# Generate self-signed certificates (for development)
-mkdir -p /tmp/postgresql-ssl
-cd /tmp/postgresql-ssl
-openssl req -new -text -passout pass:abcd -subj /CN=localhost -out server.req -keyout privkey.pem
-openssl rsa -in privkey.pem -passin pass:abcd -out server.key
-openssl req -x509 -in server.req -text -key server.key -out server.crt
-
-# Update Docker container to use SSL
-docker run -d --name memory-postgres \
-  -e POSTGRES_USER=memory_user \
-  -e POSTGRES_PASSWORD="your_password" \
-  -e POSTGRES_DB=memory_db \
-  -v /tmp/postgresql-ssl:/etc/postgresql/ssl \
-  -p 5432:5432 \
-  postgres:16
-
-# Update your pgSsl setting to true in your configuration
 ```
 
 ### Problem: Database initialization and schema issues
@@ -348,139 +272,6 @@ node scripts/init-database.js
 npm run init-database
 ```
 
-#### 3. Recreate the database using the pgvector image
-
-Instead of using the standard PostgreSQL image, use the pgvector image which comes with the extension pre-installed:
-
-```bash
-# Remove existing container
-docker rm -f memory-postgres
-
-# Use the pgvector image
-docker run -d --name memory-postgres \
-  -e POSTGRES_USER=memory_user \
-  -e POSTGRES_PASSWORD="your_password" \
-  -e POSTGRES_DB=memory_db \
-  -p 5432:5432 \
-  ankane/pgvector
-```
-
-#### 4. Check table structure
-
-If you're having issues with specific tables or columns:
-
-```bash
-# Connect to the database
-docker exec -it memory-postgres bash -c 'psql -U memory_user -d memory_db'
-
-# Inside the PostgreSQL prompt:
-\dt                       -- List all tables
-\d+ memories              -- Show detailed information about the memories table
-SELECT version();         -- Check PostgreSQL version
-SELECT * FROM pg_extension; -- Check installed extensions
-```
-
-#### 5. Manual schema creation
-
-If initialization scripts are failing, you can manually create the required schema:
-
-```sql
--- Connect to your database and run:
-CREATE EXTENSION IF NOT EXISTS vector;
-
-CREATE TABLE IF NOT EXISTS memories (
-    id SERIAL PRIMARY KEY,
-    conversation_id TEXT NOT NULL,
-    content TEXT NOT NULL,
-    embedding VECTOR(1536),
-    metadata JSONB,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
-CREATE INDEX IF NOT EXISTS idx_memories_conversation_id ON memories(conversation_id);
-CREATE INDEX IF NOT EXISTS idx_memories_created_at ON memories(created_at);
-
--- If using recent pgvector (>= 0.4.0)
-CREATE INDEX IF NOT EXISTS idx_memories_embedding ON memories USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
-```
-
-### Common PostgreSQL Error Codes and Solutions
-
-Here's a reference guide for common PostgreSQL error codes you might encounter:
-
-| Error Code | Description | Common Solutions |
-|------------|-------------|-----------------|
-| 28P01 | Password authentication failed | Check credentials in .env file and configuration |
-| 3D000 | Database does not exist | Create the database or check the database name in your configuration |
-| 42P01 | Relation does not exist | Run the initialization script or create the tables manually |
-| 53300 | Too many connections | Increase max_connections in PostgreSQL configuration or reduce connection pool size |
-| 57P03 | Database system is starting up | Wait for PostgreSQL to fully start, check logs |
-| 08006 | Connection failure | Check if PostgreSQL is running and network settings |
-| 42501 | Insufficient privilege | Grant appropriate permissions to the database user |
-| 08001 | Unable to connect | Verify hostname, port, and firewall settings |
-| 42710 | Duplicate object | Drop existing object or use IF NOT EXISTS in your creation scripts |
-| 42P07 | Duplicate table | Table already exists, use IF NOT EXISTS or drop the table first |
-
-### Diagnosing Connection Issues with psql
-
-The `psql` command-line tool is invaluable for troubleshooting database issues:
-
-```bash
-# Connect with default settings
-docker exec -it memory-postgres psql -U memory_user -d memory_db
-
-# Connect with verbose output
-docker exec -it memory-postgres psql -U memory_user -d memory_db -v
-
-# Connect with specific host/port
-psql -h localhost -p 5432 -U memory_user -d memory_db
-
-# Test connection without entering psql shell
-psql -h localhost -p 5432 -U memory_user -d memory_db -c "SELECT 1;"
-```
-
-### Advanced Database Diagnostics
-
-For more advanced database diagnostics:
-
-```bash
-# Check PostgreSQL logs
-docker exec -it memory-postgres bash -c "cat /var/lib/postgresql/data/log/*.log"
-
-# Check connection settings
-docker exec -it memory-postgres bash -c "cat /var/lib/postgresql/data/postgresql.conf | grep -E 'listen_addresses|port|max_connections'"
-
-# Check authentication settings
-docker exec -it memory-postgres bash -c "cat /var/lib/postgresql/data/pg_hba.conf"
-
-# Check if port is open
-nc -zv localhost 5432
-
-# Check running processes
-docker exec -it memory-postgres bash -c "ps aux | grep postgres"
-
-# Check database size and usage
-docker exec -it memory-postgres psql -U memory_user -d memory_db -c "SELECT pg_size_pretty(pg_database_size('memory_db'));"
-```
-
-### Troubleshooting in Production Environments
-
-For production environments, consider these additional steps:
-
-1. **Connection Pooling**: Use pgBouncer or similar to manage connections effectively
-2. **Monitoring**: Set up monitoring with tools like Prometheus and Grafana
-3. **Logging**: Configure detailed PostgreSQL logging for critical operations
-4. **Backup**: Ensure regular backups to prevent data loss
-5. **High Availability**: Consider replication for critical deployments
-
-```bash
-# Example of setting up more detailed logging
-docker exec -it memory-postgres bash -c "echo 'log_statement = 'all'' >> /var/lib/postgresql/data/postgresql.conf"
-docker exec -it memory-postgres bash -c "echo 'log_min_duration_statement = 0' >> /var/lib/postgresql/data/postgresql.conf"
-docker restart memory-postgres
-```
-
 ## Claude Desktop Integration Issues
 
 ### Problem: Claude cannot find the MCP server
@@ -513,28 +304,6 @@ If Claude reports it cannot connect to the MCP server:
    }
    ```
 
-## Docker Issues
-
-### Problem: Docker container won't start
-
-### Solutions:
-
-1. Check if the port is already in use:
-   ```bash
-   netstat -an | grep 5432
-   ```
-
-2. Check Docker logs:
-   ```bash
-   docker logs postgres-memory
-   ```
-
-3. Try a different port mapping:
-   ```bash
-   docker run -d --name postgres-memory -e POSTGRES_USER=memory_user -e POSTGRES_PASSWORD=memory_password -e POSTGRES_DB=memory_db -p 5433:5432 ankane/pgvector
-   ```
-   Then update your configuration to use port 5433.
-
 ## Performance Issues
 
 ### Problem: Slow vector searches
@@ -556,6 +325,14 @@ If Claude reports it cannot connect to the MCP server:
    ```sql
    VACUUM ANALYZE memories;
    ```
+
+## Additional Resources
+
+- [PostgreSQL Authentication Methods](https://www.postgresql.org/docs/current/auth-methods.html)
+- [Docker PostgreSQL Container Documentation](https://hub.docker.com/_/postgres)
+- [Model Context Protocol Documentation](https://modelcontextprotocol.io/docs/tools/debugging)
+- [PostgreSQL Documentation](https://www.postgresql.org/docs/)
+- [PGVector Documentation](https://github.com/pgvector/pgvector)
 
 ## Still Need Help?
 
