@@ -11,12 +11,12 @@ import { RobustHttpTransport } from './transports/robust-http-transport.js';
 const originalConsoleLog = console.log;
 const originalConsoleError = console.error;
 
-console.log = (...args) => {
-  logger.debug(...args);
+console.log = (...args: any[]) => {
+  logger.debug(args.join(' '));
 };
 
-console.error = (...args) => {
-  logger.error(...args);
+console.error = (...args: any[]) => {
+  logger.error(args.join(' '));
 };
 
 // Create a global error handler to prevent unhandled promise rejections

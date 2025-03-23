@@ -12,6 +12,8 @@
     "declaration": true,
     "resolveJsonModule": true,
     "baseUrl": ".",
+    "allowSyntheticDefaultImports": true,
+    "noImplicitAny": false,
     "paths": {
       "@modelcontextprotocol/typescript-sdk": ["./typescript-sdk/dist/esm"],
       "@modelcontextprotocol/typescript-sdk/*": ["./typescript-sdk/dist/esm/*"]

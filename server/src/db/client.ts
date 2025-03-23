@@ -1,11 +1,13 @@
-import pkg from 'pg';
-const { Pool } = pkg;
-type PoolClient = any; // Using any as a temporary fix for TypeScript issues
+import pg from 'pg';
 import dotenv from 'dotenv';
 import { logger } from '../utils/logger.js';
 
 // Load environment variables
 dotenv.config();
+
+// Import Pool and PoolClient type
+const { Pool } = pg;
+type PoolClient = pg.PoolClient;
 
 // Database connection configuration
 const poolConfig = {
@@ -24,7 +26,7 @@ const poolConfig = {
 const pool = new Pool(poolConfig);
 
 // Pool error handler
-pool.on('error', (err) => {
+pool.on('error', (err: Error) => {
   logger.error('Unexpected error on idle client', err);
   process.exit(-1);
 });

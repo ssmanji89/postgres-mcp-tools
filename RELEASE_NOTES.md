@@ -1,5 +1,15 @@
 # Release Notes
 
+## Version 1.0.15 (2025-03-23)
+
+### TypeScript Build Fixes
+
+- Fixed TypeScript compilation errors in server code
+- Updated type declarations for express and pg
+- Added fix-server-deps script to ensure proper dependencies
+- Improved tsconfig.json settings for better type handling
+- Added proper type annotations to Express route handlers
+
 ## Version 1.0.14 (2025-03-23)
 
 ### Logging System Improvements

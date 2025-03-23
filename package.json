@@ -1,6 +1,6 @@
 {
   "name": "postgres-mcp-tools",
-  "version": "1.0.14",
+  "version": "1.0.15",
   "description": "PostgreSQL-based memory system with vector search capabilities for AI applications, including MCP integration for Claude",
   "main": "src/index.js",
   "type": "module",
@@ -17,9 +17,10 @@
     "update-deps": "npm install --save-dev @babel/core@7.22.9 @babel/preset-env@7.22.9 @babel/preset-typescript@7.22.5 @types/jest@29.5.3 babel-jest@29.6.1 ts-jest@29.1.1",
     "setup-mcp-sdk": "node scripts/setup-mcp-sdk.js",
     "ensure-logs-dir": "node scripts/ensure-logs-dir.js",
+    "fix-server-deps": "node scripts/fix-server-deps.js",
     "lint": "eslint src/**/*.js server/**/*.ts",
     "setup-server": "cd server && npm install",
-    "build-server": "cd server && npm run build",
+    "build-server": "npm run fix-server-deps && cd server && npm run build",
     "start-server": "npm run ensure-logs-dir && cd server && npm start",
     "start": "node src/index.js",
     "health-check": "node scripts/health-check-server.js",
@@ -59,6 +60,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
     "dotenv": "^16.3.1",
+    "express": "^5.0.1",
     "pg": "^8.11.3",
     "winston": "^3.10.0"
   },
@@ -66,6 +68,7 @@
     "@babel/core": "^7.22.9",
     "@babel/preset-env": "^7.22.9",
     "@babel/preset-typescript": "^7.22.5",
+    "@types/express": "^5.0.1",
     "@types/jest": "^29.5.3",
     "@types/pg": "^8.11.11",
     "babel-jest": "^29.6.1",

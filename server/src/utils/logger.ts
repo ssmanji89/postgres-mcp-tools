@@ -20,7 +20,7 @@ const createLogsDirectory = () => {
       fs.mkdirSync(logsDir, { recursive: true });
       console.error(`Created logs directory at: ${logsDir}`);
     } catch (error) {
-      console.error(`Failed to create logs directory: ${error.message}`);
+      console.error(`Failed to create logs directory: ${error instanceof Error ? error.message : String(error)}`);
       // Continue without file logging
     }
   }
@@ -80,33 +80,34 @@ const transports = [
 ];
 
 // Add file transport in production
-const fileTransports = [];
+const fileTransports: winston.transport[] = [];
 if (process.env.NODE_ENV === 'production') {
   try {
     // Use absolute paths for log files
     const logsDir = path.join(process.cwd(), 'logs');
     
-    fileTransports.push(
-      new winston.transports.File({
-        filename: path.join(logsDir, 'error.log'),
-        level: 'error',
-        maxsize: 5242880, // 5MB
-        maxFiles: 5,
-        // Handle file errors gracefully
-        handleExceptions: true,
-        handleRejections: true,
-      }),
-      new winston.transports.File({
-        filename: path.join(logsDir, 'combined.log'),
-        maxsize: 5242880, // 5MB
-        maxFiles: 5,
-        // Handle file errors gracefully
-        handleExceptions: true,
-        handleRejections: true,
-      }),
-    );
+    const errorFileTransport = new winston.transports.File({
+      filename: path.join(logsDir, 'error.log'),
+      level: 'error',
+      maxsize: 5242880, // 5MB
+      maxFiles: 5,
+      // Handle file errors gracefully
+      handleExceptions: true,
+      handleRejections: true,
+    });
+    
+    const combinedFileTransport = new winston.transports.File({
+      filename: path.join(logsDir, 'combined.log'),
+      maxsize: 5242880, // 5MB
+      maxFiles: 5,
+      // Handle file errors gracefully
+      handleExceptions: true,
+      handleRejections: true,
+    });
+    
+    fileTransports.push(errorFileTransport, combinedFileTransport);
   } catch (error) {
-    console.error(`Error setting up file transports: ${error.message}`);
+    console.error(`Error setting up file transports: ${error instanceof Error ? error.message : String(error)}`);
     // Continue with console logging only
   }
 }

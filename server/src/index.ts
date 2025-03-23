@@ -56,7 +56,7 @@ const startServer = async () => {
     
     // Add health endpoint
     logger.debug('Adding health endpoint...');
-    app.get('/health', async (req, res, next) => {
+    app.get('/health', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
       try {
         logger.debug('Health endpoint requested');
         const isHealthy = await healthCheck();
@@ -76,7 +76,7 @@ const startServer = async () => {
     
     // Add a simple root endpoint
     logger.debug('Adding root endpoint...');
-    app.get('/', (req, res) => {
+    app.get('/', (req: express.Request, res: express.Response) => {
       logger.debug('Root endpoint requested');
       res.status(200).json({ 
         message: 'PostgreSQL MCP Server is running',
@@ -87,7 +87,7 @@ const startServer = async () => {
     logger.debug('Root endpoint added');
     
     // Add version endpoint
-    app.get('/version', (req, res) => {
+    app.get('/version', (req: express.Request, res: express.Response) => {
       res.status(200).json({ 
         version: '1.0.2',
         name: 'postgres-memory-mcp',
