@@ -119,9 +119,17 @@ See [tests/README.md](tests/README.md) for more information on testing.
 
 As of version 1.0.9, PostgreSQL MCP Tools now properly integrates with Claude Desktop by ensuring all debug logs go to stderr instead of stdout, maintaining proper JSON-RPC protocol communication.
 
-### Latest Release: v1.0.11 (2025-03-23)
+### Latest Release: v1.0.14 (2025-03-23)
 
-We've implemented a production-ready robust transport layer that handles non-JSON messages gracefully. This fixes issues where plain text log messages were causing the server to crash with JSON parsing errors.
+We've implemented a production-ready robust transport layer that handles non-JSON messages gracefully and fixed critical logging issues that were causing server crashes.
+
+#### Logging System Improvements
+
+- Fixed logs directory creation issue that was causing server crashes
+- Added prestart script to ensure logs directory exists before server starts
+- Improved error handling in the logger configuration
+
+#### Robust Transport Layer
 
 Key improvements:
 - Added error handling for non-JSON messages in the transport layer
@@ -138,7 +146,7 @@ If you previously experienced JSON parsing errors when starting the server, this
 
 See full [RELEASE_NOTES.md](RELEASE_NOTES.md) for all changes.
 
-#### Upgrading to v1.0.11
+#### Upgrading to v1.0.14
 
 If you're upgrading from a previous version, run:
 

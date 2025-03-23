@@ -1,6 +1,16 @@
 # Release Notes
 
-## Version 1.0.11 (2025-03-23)
+## Version 1.0.14 (2025-03-23)
+
+### Logging System Improvements
+
+- Fixed logs directory creation issue that was causing server crashes
+- Added prestart script to ensure logs directory exists before server starts
+- Improved error handling in the logger configuration
+- Added absolute paths for log files to prevent directory issues
+- Created ensure-logs-dir script to guarantee logs directory creation
+
+## Version 1.0.13 (2025-03-23)
 
 ### Installation Improvements
 

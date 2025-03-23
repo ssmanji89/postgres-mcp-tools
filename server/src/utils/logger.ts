@@ -1,8 +1,33 @@
 import winston from 'winston';
 import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
 
 // Load environment variables
 dotenv.config();
+
+// Ensure logs directory exists
+const createLogsDirectory = () => {
+  // Get the current working directory
+  const cwd = process.cwd();
+  
+  // Define the logs directory path
+  const logsDir = path.join(cwd, 'logs');
+  
+  // Create the logs directory if it doesn't exist
+  if (!fs.existsSync(logsDir)) {
+    try {
+      fs.mkdirSync(logsDir, { recursive: true });
+      console.error(`Created logs directory at: ${logsDir}`);
+    } catch (error) {
+      console.error(`Failed to create logs directory: ${error.message}`);
+      // Continue without file logging
+    }
+  }
+};
+
+// Create logs directory before initializing file transports
+createLogsDirectory();
 
 // Define log levels
 const levels = {
@@ -57,19 +82,33 @@ const transports = [
 // Add file transport in production
 const fileTransports = [];
 if (process.env.NODE_ENV === 'production') {
-  fileTransports.push(
-    new winston.transports.File({
-      filename: 'logs/error.log',
-      level: 'error',
-      maxsize: 5242880, // 5MB
-      maxFiles: 5,
-    }),
-    new winston.transports.File({
-      filename: 'logs/combined.log',
-      maxsize: 5242880, // 5MB
-      maxFiles: 5,
-    }),
-  );
+  try {
+    // Use absolute paths for log files
+    const logsDir = path.join(process.cwd(), 'logs');
+    
+    fileTransports.push(
+      new winston.transports.File({
+        filename: path.join(logsDir, 'error.log'),
+        level: 'error',
+        maxsize: 5242880, // 5MB
+        maxFiles: 5,
+        // Handle file errors gracefully
+        handleExceptions: true,
+        handleRejections: true,
+      }),
+      new winston.transports.File({
+        filename: path.join(logsDir, 'combined.log'),
+        maxsize: 5242880, // 5MB
+        maxFiles: 5,
+        // Handle file errors gracefully
+        handleExceptions: true,
+        handleRejections: true,
+      }),
+    );
+  } catch (error) {
+    console.error(`Error setting up file transports: ${error.message}`);
+    // Continue with console logging only
+  }
 }
 
 // Create the logger instance

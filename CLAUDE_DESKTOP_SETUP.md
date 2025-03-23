@@ -178,7 +178,7 @@ If Claude reports that it cannot connect to the memory system:
 
 If you notice errors like "Unexpected token" or "Not valid JSON" in the logs:
 
-1. **Ensure you're using version 1.0.11 or later**:
+1. **Ensure you're using version 1.0.14 or later**:
    ```bash
    npm list -g postgres-mcp-tools
    ```
@@ -210,6 +210,33 @@ If you notice errors like "Unexpected token" or "Not valid JSON" in the logs:
    ```bash
    cd $(npm root -g)/postgres-mcp-tools
    npm run test:basic
+   ```
+
+### Logs Directory Errors
+
+If you see errors like "ENOENT: no such file or directory, mkdir 'logs'":
+
+1. **Ensure you're using version 1.0.14 or later**:
+   ```bash
+   npm list -g postgres-mcp-tools
+   ```
+
+2. **Update to the latest version**:
+   ```bash
+   npm uninstall -g postgres-mcp-tools
+   npm install -g postgres-mcp-tools
+   ```
+
+3. **Manually create the logs directory**:
+   ```bash
+   mkdir -p $(npm root -g)/postgres-mcp-tools/logs
+   mkdir -p $(npm root -g)/postgres-mcp-tools/server/logs
+   ```
+
+4. **Run the logs directory script**:
+   ```bash
+   cd $(npm root -g)/postgres-mcp-tools
+   npm run ensure-logs-dir
    ```
 
 ### Dependency-Related Errors
