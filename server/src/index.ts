@@ -5,6 +5,7 @@ import { healthCheck } from './db/client.js';
 import { registerResources } from './resources/index.js';
 import { registerTools } from './tools/index.js';
 import express from 'express';
+import { registerGlobalErrorHandlers, tryCatch, errorHandlerMiddleware } from './utils/error-handler.js';
 
 // Load environment variables
 dotenv.config();
@@ -29,9 +30,12 @@ const server = new Server({
 const app = express();
 logger.debug('Express app created');
 
+// Register global error handlers
+registerGlobalErrorHandlers();
+
 // Start the server
 const startServer = async () => {
-  try {
+  return tryCatch(async () => {
     // Check database connection
     logger.debug('Checking database connection...');
     const isHealthy = await healthCheck();
@@ -47,11 +51,14 @@ const startServer = async () => {
     logger.info(`MCP Server listening on ${HOST}:${MCP_PORT}`);
     logger.info('MCP server started');
     
+    // Add error middleware to Express
+    app.use(errorHandlerMiddleware());
+    
     // Add health endpoint
     logger.debug('Adding health endpoint...');
-    app.get('/health', async (req, res) => {
-      logger.debug('Health endpoint requested');
+    app.get('/health', async (req, res, next) => {
       try {
+        logger.debug('Health endpoint requested');
         const isHealthy = await healthCheck();
         logger.debug(`Health check result: ${isHealthy}`);
         
@@ -61,8 +68,8 @@ const startServer = async () => {
           res.status(500).json({ status: 'error', message: 'Service is unhealthy' });
         }
       } catch (error) {
-        logger.error('Error handling health check:', error);
-        res.status(500).json({ status: 'error', message: 'Error handling health check' });
+        // Pass error to the error middleware
+        next(error);
       }
     });
     logger.debug('Health endpoint added');
@@ -71,9 +78,23 @@ const startServer = async () => {
     logger.debug('Adding root endpoint...');
     app.get('/', (req, res) => {
       logger.debug('Root endpoint requested');
-      res.status(200).json({ message: 'PostgreSQL MCP Server is running' });
+      res.status(200).json({ 
+        message: 'PostgreSQL MCP Server is running',
+        version: '1.0.2',
+        features: ['Robust transport layer', 'Error handling', 'HTTP API']
+      });
     });
     logger.debug('Root endpoint added');
+    
+    // Add version endpoint
+    app.get('/version', (req, res) => {
+      res.status(200).json({ 
+        version: '1.0.2',
+        name: 'postgres-memory-mcp',
+        robustTransport: true,
+        errorHandling: true
+      });
+    });
     
     // Start the Express server on a different port
     logger.debug(`Starting Express server on ${HOST}:${HTTP_PORT}...`);
@@ -86,24 +107,26 @@ const startServer = async () => {
       logger.info('Shutdown requested');
       logger.info('Shutting down MCP server...');
       await server.close();
-      process.exit(0);
+      // Exit gracefully
+      setTimeout(() => process.exit(0), 500);
     };
     
     // Register shutdown handlers
     process.on('SIGINT', handleShutdown);
     process.on('SIGTERM', handleShutdown);
     logger.debug('Shutdown handlers registered');
-    
-  } catch (error) {
-    logger.error('Error starting MCP server:', error);
-    process.exit(1);
-  }
+  }, 'startServer');
 };
 
 // Start the server
-logger.info('Starting server...');
+logger.info('Starting PostgreSQL MCP server with robust transport layer...');
 startServer().then(() => {
   logger.info('Server started successfully');
+  logger.info('Robust transport layer initialized successfully');
 }).catch((error) => {
   logger.error('Failed to start server:', error);
+  // Don't exit immediately, give it a moment to log the error
+  setTimeout(() => {
+    process.exit(1);
+  }, 1000);
 });

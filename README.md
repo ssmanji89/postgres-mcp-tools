@@ -19,6 +19,8 @@ npm install -g postgres-mcp-tools
 
 ## Quick Start
 
+For detailed installation instructions including troubleshooting, see [INSTALLATION.md](docs/INSTALLATION.md).
+
 ### Start PostgreSQL
 
 ```bash
@@ -31,6 +33,13 @@ docker-compose up -d postgres
 ```bash
 # Start the MCP server
 docker-compose up -d mcp-server
+```
+
+### Test the Robust Transport
+
+```bash
+# Verify the robust transport functionality
+npm run test-transport
 ```
 
 ### Configure Claude Desktop
@@ -78,16 +87,59 @@ docker-compose down
 # Install dependencies
 npm install
 
+# Install test dependencies
+npm run update-deps
+
 # Build the server
 npm run build-server
 
-# Run tests
-npm test
+# Run minimal tests (recommended)
+npm run test:basic
+
+# Run transport tests (may require configuration)
+npm run test:transport
 ```
+
+> **Note**: The test setup is configured for ESM compatibility in a primarily ESM project. If you encounter issues, try the alternate test configuration with `npm run test:alt`.
+
+See [tests/README.md](tests/README.md) for more information on testing.
 
 ## Claude Desktop Integration
 
 As of version 1.0.9, PostgreSQL MCP Tools now properly integrates with Claude Desktop by ensuring all debug logs go to stderr instead of stdout, maintaining proper JSON-RPC protocol communication.
+
+### Latest Release: v1.0.11 (2025-03-23)
+
+We've implemented a production-ready robust transport layer that handles non-JSON messages gracefully. This fixes issues where plain text log messages were causing the server to crash with JSON parsing errors.
+
+Key improvements:
+- Added error handling for non-JSON messages in the transport layer
+- Implemented a robust HTTP transport that doesn't crash on invalid input
+- Added global error handlers to prevent unhandled exceptions and rejections
+- Improved logging to help diagnose issues
+- Properly handles bidirectional communication with clients
+- Maintains session information required by the MCP protocol
+- Updated Claude Desktop configuration format for proper port settings
+
+For detailed information about the robust transport implementation, see [ROBUST_TRANSPORT.md](docs/ROBUST_TRANSPORT.md).
+
+If you previously experienced JSON parsing errors when starting the server, this update should resolve those issues.
+
+See full [RELEASE_NOTES.md](RELEASE_NOTES.md) for all changes.
+
+#### Upgrading to v1.0.11
+
+If you're upgrading from a previous version, run:
+
+```bash
+npm update -g postgres-mcp-tools
+```
+
+Then update your Claude Desktop configuration as described in [CLAUDE_DESKTOP_SETUP.md](CLAUDE_DESKTOP_SETUP.md) and restart the MCP server:
+
+```bash
+npm run start-server
+```
 
 ## License
 

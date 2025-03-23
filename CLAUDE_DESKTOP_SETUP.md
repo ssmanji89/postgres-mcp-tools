@@ -12,7 +12,14 @@ Before starting, ensure you have:
 
 ## Important Note About Claude Desktop Integration
 
-**New in version 1.0.9**: PostgreSQL MCP Tools has been updated to properly integrate with Claude Desktop by ensuring all debug logs go to stderr instead of stdout. This maintains proper JSON-RPC protocol communication between Claude Desktop and the MCP server.
+**New in version 1.0.10**: PostgreSQL MCP Tools has been updated with a robust transport layer that handles mixed message formats gracefully, preventing JSON parsing errors. This update:
+
+- Ensures proper integration with Claude Desktop by directing all debug logs to stderr instead of stdout
+- Handles non-JSON messages gracefully, preventing server crashes
+- Provides comprehensive error handling for all message types
+- Maintains proper JSON-RPC protocol communication with the MCP framework
+
+For details on the robust transport implementation, see [ROBUST_TRANSPORT.md](docs/ROBUST_TRANSPORT.md).
 
 ## Installation Steps
 
@@ -86,17 +93,23 @@ Add the following content to the file:
       "command": "postgres-mcp-server",
       "args": [
         "--config",
-        "{\"embeddingModel\":\"mock\",\"pgHost\":\"localhost\",\"pgPort\":5432,\"pgUser\":\"memory_user\",\"pgPassword\":\"YOUR_GENERATED_PASSWORD\",\"pgDatabase\":\"memory_db\"}"
+        "{\"embeddingModel\":\"mock\",\"pgHost\":\"localhost\",\"pgPort\":5432,\"pgUser\":\"memory_user\",\"pgPassword\":\"YOUR_GENERATED_PASSWORD\",\"pgDatabase\":\"memory_db\",\"mcpPort\":3000}"
       ],
       "env": {
-        "FORCE_STDERR_LOGGING": "true"
+        "FORCE_STDERR_LOGGING": "true",
+        "NODE_ENV": "production",
+        "LOG_LEVEL": "info"
       }
     }
   }
 }
 ```
 
-The `FORCE_STDERR_LOGGING` environment variable ensures all logging output is directed to stderr, which is essential for proper MCP protocol communication with Claude Desktop.
+The configuration includes:
+- `FORCE_STDERR_LOGGING`: Ensures all logging output is directed to stderr, essential for proper MCP protocol communication
+- `NODE_ENV`: Sets the runtime environment ("production" recommended for stable operation)
+- `LOG_LEVEL`: Controls the verbosity of logging (options: debug, info, warn, error)
+- `mcpPort`: Explicitly defines the MCP server port (default: 3000)
 
 Replace `YOUR_GENERATED_PASSWORD` with the password from your `.env` file:
 
@@ -160,6 +173,30 @@ If Claude reports that it cannot connect to the memory system:
 3. **Ensure password matches**:
    - The password in the Claude configuration must match what's in your `.env` file
    - Check for special characters that might need escaping in the JSON
+
+### JSON Parsing Errors
+
+If you notice errors like "Unexpected token" or "Not valid JSON" in the logs:
+
+1. **Ensure you're using version 1.0.10 or later**:
+   ```bash
+   npm list -g postgres-mcp-tools
+   ```
+
+2. **Update to the latest version**:
+   ```bash
+   npm update -g postgres-mcp-tools
+   ```
+
+3. **Verify robust transport configuration**:
+   - The `FORCE_STDERR_LOGGING` environment variable should be set to `true`
+   - Check logs for any remaining parsing errors
+
+4. **Test the transport layer**:
+   ```bash
+   cd $(npm root -g)/postgres-mcp-tools
+   npm run test:basic
+   ```
 
 ### Database Errors
 
