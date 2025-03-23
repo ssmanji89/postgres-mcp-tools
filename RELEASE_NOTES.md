@@ -2,6 +2,14 @@
 
 ## Version 1.0.11 (2025-03-23)
 
+### Installation Improvements
+
+- Fixed circular dependency issues in package.json
+- Added setup-mcp-sdk script to handle MCP SDK installation
+- Updated installation instructions with alternatives for dependency errors
+- Improved README with comprehensive installation guidance
+- Added upgrade instructions for different scenarios
+
 ### Robust Transport Layer Improvements
 
 - Added comprehensive error handling for JSON parsing errors

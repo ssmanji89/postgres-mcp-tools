@@ -15,6 +15,7 @@
     "test:basic": "node --experimental-vm-modules node_modules/.bin/jest tests/basic.test.js --config=jest.config.cjs",
     "test:alt": "node --experimental-vm-modules node_modules/.bin/jest --config=jest.alt.config.cjs",
     "update-deps": "npm install --save-dev @babel/core@7.22.9 @babel/preset-env@7.22.9 @babel/preset-typescript@7.22.5 @types/jest@29.5.3 babel-jest@29.6.1 ts-jest@29.1.1",
+    "setup-mcp-sdk": "node scripts/setup-mcp-sdk.js",
     "lint": "eslint src/**/*.js server/**/*.ts",
     "setup-server": "cd server && npm install",
     "build-server": "cd server && npm run build",
@@ -25,8 +26,8 @@
     "docker:prod": "docker-compose up -d",
     "docker:stop": "docker-compose down",
     "init-database": "node scripts/init-database.js",
-    "prepare": "npm run build-server",
-    "postinstall": "node scripts/postinstall.js",
+    "prepare": "npm run setup-mcp-sdk && npm run build-server",
+    "postinstall": "node scripts/postinstall.js && npm run setup-mcp-sdk",
     "generate-password": "node scripts/generate-password.js",
     "troubleshoot": "node scripts/troubleshoot-database.js",
     "fix-postgres-auth": "bash scripts/fix-postgres-auth.sh",
@@ -56,11 +57,8 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
-    "@modelcontextprotocol/sdk": "github:modelcontextprotocol/typescript-sdk",
-    "@modelcontextprotocol/typescript-sdk": "github:modelcontextprotocol/typescript-sdk",
     "dotenv": "^16.3.1",
     "pg": "^8.11.3",
-    "postgres-mcp-tools": "^1.0.0",
     "winston": "^3.10.0"
   },
   "devDependencies": {

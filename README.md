@@ -14,7 +14,18 @@ This package provides a memory system built on PostgreSQL with pgvector that ena
 ## Installation
 
 ```bash
+# Install globally (preferred)
 npm install -g postgres-mcp-tools
+
+# If you encounter dependency errors, try:
+npm install -g postgres-mcp-tools --force --no-save
+
+# If you're still having issues, you can install from the GitHub repo:
+git clone https://github.com/ssmanji89/postgres-mcp-tools.git
+cd postgres-mcp-tools
+npm install
+npm run setup-mcp-sdk
+npm link
 ```
 
 ## Quick Start
@@ -132,7 +143,21 @@ See full [RELEASE_NOTES.md](RELEASE_NOTES.md) for all changes.
 If you're upgrading from a previous version, run:
 
 ```bash
-npm update -g postgres-mcp-tools
+# First, remove the old version
+npm uninstall -g postgres-mcp-tools
+
+# Then install the new version
+npm install -g postgres-mcp-tools
+
+# If you encounter dependency errors, try:
+npm install -g postgres-mcp-tools --force --no-save
+
+# Or install from the GitHub repo:
+git clone https://github.com/ssmanji89/postgres-mcp-tools.git
+cd postgres-mcp-tools
+npm install
+npm run setup-mcp-sdk
+npm link
 ```
 
 Then update your Claude Desktop configuration as described in [CLAUDE_DESKTOP_SETUP.md](CLAUDE_DESKTOP_SETUP.md) and restart the MCP server:

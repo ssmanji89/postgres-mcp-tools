@@ -178,24 +178,63 @@ If Claude reports that it cannot connect to the memory system:
 
 If you notice errors like "Unexpected token" or "Not valid JSON" in the logs:
 
-1. **Ensure you're using version 1.0.10 or later**:
+1. **Ensure you're using version 1.0.11 or later**:
    ```bash
    npm list -g postgres-mcp-tools
    ```
 
 2. **Update to the latest version**:
    ```bash
-   npm update -g postgres-mcp-tools
+   npm uninstall -g postgres-mcp-tools
+   npm install -g postgres-mcp-tools
    ```
 
-3. **Verify robust transport configuration**:
+3. **If installation fails with dependency errors**:
+   ```bash
+   # Option 1: Use force flag
+   npm install -g postgres-mcp-tools --force --no-save
+   
+   # Option 2: Install from GitHub repo
+   git clone https://github.com/ssmanji89/postgres-mcp-tools.git
+   cd postgres-mcp-tools
+   npm install
+   npm run setup-mcp-sdk
+   npm link
+   ```
+
+4. **Verify robust transport configuration**:
    - The `FORCE_STDERR_LOGGING` environment variable should be set to `true`
    - Check logs for any remaining parsing errors
 
-4. **Test the transport layer**:
+5. **Test the transport layer**:
    ```bash
    cd $(npm root -g)/postgres-mcp-tools
    npm run test:basic
+   ```
+
+### Dependency-Related Errors
+
+If you encounter errors related to `@modelcontextprotocol/sdk` or `@modelcontextprotocol/typescript-sdk`:
+
+1. **Run the MCP SDK setup script**:
+   ```bash
+   cd $(npm root -g)/postgres-mcp-tools
+   npm run setup-mcp-sdk
+   ```
+
+2. **Manually clone the SDK repository**:
+   ```bash
+   cd $(npm root -g)/postgres-mcp-tools/server
+   rm -rf typescript-sdk
+   git clone https://github.com/modelcontextprotocol/typescript-sdk.git typescript-sdk
+   cd typescript-sdk
+   npm install
+   ```
+
+3. **Rebuild the server**:
+   ```bash
+   cd $(npm root -g)/postgres-mcp-tools
+   npm run build-server
    ```
 
 ### Database Errors
