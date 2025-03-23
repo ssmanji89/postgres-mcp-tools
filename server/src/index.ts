@@ -14,10 +14,10 @@ const MCP_PORT = parseInt(process.env.MCP_SERVER_PORT || '3000', 10);
 const HTTP_PORT = parseInt(process.env.HTTP_PORT || '8080', 10);
 const HOST = process.env.MCP_SERVER_HOST || '0.0.0.0';
 
-console.log('Starting PostgreSQL MCP server...');
-console.log(`MCP_PORT: ${MCP_PORT}`);
-console.log(`HTTP_PORT: ${HTTP_PORT}`);
-console.log(`HOST: ${HOST}`);
+logger.info('Starting PostgreSQL MCP server...');
+logger.debug(`MCP_PORT: ${MCP_PORT}`);
+logger.debug(`HTTP_PORT: ${HTTP_PORT}`);
+logger.debug(`HOST: ${HOST}`);
 
 // Create the MCP server
 const server = new Server({
@@ -27,33 +27,33 @@ const server = new Server({
 
 // Create an Express app for HTTP endpoints
 const app = express();
-console.log('Express app created');
+logger.debug('Express app created');
 
 // Start the server
 const startServer = async () => {
   try {
     // Check database connection
-    console.log('Checking database connection...');
+    logger.debug('Checking database connection...');
     const isHealthy = await healthCheck();
     if (!isHealthy) {
       logger.error('Database health check failed. Exiting.');
       process.exit(1);
     }
-    console.log('Database connection successful');
+    logger.info('Database connection successful');
     
     // Start the MCP server
-    console.log(`Starting MCP server on ${HOST}:${MCP_PORT}...`);
+    logger.debug(`Starting MCP server on ${HOST}:${MCP_PORT}...`);
     await server.listen(MCP_PORT, HOST);
     logger.info(`MCP Server listening on ${HOST}:${MCP_PORT}`);
-    console.log('MCP server started');
+    logger.info('MCP server started');
     
     // Add health endpoint
-    console.log('Adding health endpoint...');
+    logger.debug('Adding health endpoint...');
     app.get('/health', async (req, res) => {
-      console.log('Health endpoint requested');
+      logger.debug('Health endpoint requested');
       try {
         const isHealthy = await healthCheck();
-        console.log(`Health check result: ${isHealthy}`);
+        logger.debug(`Health check result: ${isHealthy}`);
         
         if (isHealthy) {
           res.status(200).json({ status: 'ok', message: 'Service is healthy' });
@@ -61,31 +61,29 @@ const startServer = async () => {
           res.status(500).json({ status: 'error', message: 'Service is unhealthy' });
         }
       } catch (error) {
-        console.error('Error handling health check:', error);
         logger.error('Error handling health check:', error);
         res.status(500).json({ status: 'error', message: 'Error handling health check' });
       }
     });
-    console.log('Health endpoint added');
+    logger.debug('Health endpoint added');
     
     // Add a simple root endpoint
-    console.log('Adding root endpoint...');
+    logger.debug('Adding root endpoint...');
     app.get('/', (req, res) => {
-      console.log('Root endpoint requested');
+      logger.debug('Root endpoint requested');
       res.status(200).json({ message: 'PostgreSQL MCP Server is running' });
     });
-    console.log('Root endpoint added');
+    logger.debug('Root endpoint added');
     
     // Start the Express server on a different port
-    console.log(`Starting Express server on ${HOST}:${HTTP_PORT}...`);
+    logger.debug(`Starting Express server on ${HOST}:${HTTP_PORT}...`);
     app.listen(HTTP_PORT, HOST, () => {
-      console.log(`Express server listening on ${HOST}:${HTTP_PORT}`);
       logger.info(`Express server listening on ${HOST}:${HTTP_PORT}`);
     });
     
     // Handle server shutdown
     const handleShutdown = async () => {
-      console.log('Shutdown requested');
+      logger.info('Shutdown requested');
       logger.info('Shutting down MCP server...');
       await server.close();
       process.exit(0);
@@ -94,19 +92,18 @@ const startServer = async () => {
     // Register shutdown handlers
     process.on('SIGINT', handleShutdown);
     process.on('SIGTERM', handleShutdown);
-    console.log('Shutdown handlers registered');
+    logger.debug('Shutdown handlers registered');
     
   } catch (error) {
-    console.error('Error starting MCP server:', error);
     logger.error('Error starting MCP server:', error);
     process.exit(1);
   }
 };
 
 // Start the server
-console.log('Starting server...');
+logger.info('Starting server...');
 startServer().then(() => {
-  console.log('Server started successfully');
+  logger.info('Server started successfully');
 }).catch((error) => {
-  console.error('Failed to start server:', error);
+  logger.error('Failed to start server:', error);
 });

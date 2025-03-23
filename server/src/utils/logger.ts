@@ -49,6 +49,8 @@ const transports = [
         (info) => `${info.timestamp} ${info.level}: ${info.message}`,
       ),
     ),
+    // Force all log levels to stderr
+    stderrLevels: Object.keys(levels),
   }),
 ];
 

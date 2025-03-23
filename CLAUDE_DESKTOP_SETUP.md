@@ -10,6 +10,10 @@ Before starting, ensure you have:
 2. [Node.js](https://nodejs.org/) 18.0.0 or higher
 3. [Docker Desktop](https://www.docker.com/products/docker-desktop/) for running PostgreSQL
 
+## Important Note About Claude Desktop Integration
+
+**New in version 1.0.9**: PostgreSQL MCP Tools has been updated to properly integrate with Claude Desktop by ensuring all debug logs go to stderr instead of stdout. This maintains proper JSON-RPC protocol communication between Claude Desktop and the MCP server.
+
 ## Installation Steps
 
 ### 1. Install PostgreSQL MCP Tools
@@ -83,11 +87,16 @@ Add the following content to the file:
       "args": [
         "--config",
         "{\"embeddingModel\":\"mock\",\"pgHost\":\"localhost\",\"pgPort\":5432,\"pgUser\":\"memory_user\",\"pgPassword\":\"YOUR_GENERATED_PASSWORD\",\"pgDatabase\":\"memory_db\"}"
-      ]
+      ],
+      "env": {
+        "FORCE_STDERR_LOGGING": "true"
+      }
     }
   }
 }
 ```
+
+The `FORCE_STDERR_LOGGING` environment variable ensures all logging output is directed to stderr, which is essential for proper MCP protocol communication with Claude Desktop.
 
 Replace `YOUR_GENERATED_PASSWORD` with the password from your `.env` file:
 

@@ -5,6 +5,18 @@ import { Server as MCPServer } from '../typescript-sdk/dist/esm/server/index.js'
 import http from 'http';
 import { logger } from './utils/logger.js';
 
+// Force all console.log outputs to go through the logger
+const originalConsoleLog = console.log;
+const originalConsoleError = console.error;
+
+console.log = (...args) => {
+  logger.debug(...args);
+};
+
+console.error = (...args) => {
+  logger.error(...args);
+};
+
 // Enhanced response object to include Express-like methods
 interface EnhancedResponse extends http.ServerResponse {
   status(code: number): EnhancedResponse;
@@ -40,7 +52,7 @@ export class Server extends MCPServer {
       }
       
       this.httpServer.listen(port, host, () => {
-        console.log(`[Server] Started listening on ${host}:${port}`);
+        logger.debug(`[Server] Started listening on ${host}:${port}`);
         resolve();
       }).on('error', (error) => {
         reject(error);
@@ -51,7 +63,7 @@ export class Server extends MCPServer {
   addEndpoint(path: string, handler: (req: http.IncomingMessage, res: EnhancedResponse) => Promise<void>) {
     // Store the handler for the endpoint
     this.endpoints.set(path, handler);
-    console.log(`[Server] Added endpoint: ${path}`);
+    logger.debug(`[Server] Added endpoint: ${path}`);
   }
 
   async close() {
