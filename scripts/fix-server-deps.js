@@ -27,9 +27,9 @@ try {
   
   console.log('Server dependencies installed successfully.');
   
-  // Install type declarations explicitly
-  console.log('Installing type declarations...');
-  execSync('npm install --save-dev @types/express@4.17.21 @types/pg@8.10.7', { 
+  // Install express and its types explicitly
+  console.log('Installing express and type declarations...');
+  execSync('npm install --save express@4.18.2 && npm install --save-dev @types/express@4.17.21 @types/pg@8.10.7', { 
     cwd: serverDir, 
     stdio: 'inherit',
     env: { ...process.env, FORCE_COLOR: '1' }
